@@ -1,0 +1,3 @@
+set WIND_BASE X:/VXW6948/vxworks-6.9
+set VSB_DIR X:/VXW6948/vxworks-6.9/target/lib
+set ANALYSIS_DKM_DIR X:/VXW6948/vxworks-6.9/target/lib/pentium/PENTIUM4/common/dkm/analysis

@@ -1,0 +1,1985 @@
+\" amd_ekabini_dbft3/target.ref - Intel Unified BSP target-specific documentation
+\"
+\" Copyright (c) 2012-2013 Wind River Systems, Inc.
+\"
+\" The right to copy, distribute, modify or otherwise make use
+\" of this software may be licensed only pursuant to the terms
+\" of an applicable Wind River license agreement.
+\"
+\" modification history
+\" --------------------
+\" 01e,14jun13,jjk  WIND00364942 - Updating bspTool location in documentation.
+\" 01d,11jun13,jjk  WIND00364942 - Updating supported drivers.
+\" 01c,24may13,jjk  Removing AMP and GUEST from documentation
+\" 01b,09may13,jjk  WIND00364942 - Adding Unified BSP.
+\" 01a,06jul12,j_z  created based on itl_nehalem version 01o.
+\"
+\"
+\TITLE amd_ekabini_dbft3 - AMD(R) ekabini DB-FT3 BSP based on itl_x86 Unified BSP
+
+\"------------------------------------------------------------------------------
+\"------------------------------------------------------------------------------
+INDEX
+\"------------------------------------------------------------------------------
+\"------------------------------------------------------------------------------
+\cs
+ 1.0 INTRODUCTION
+ 2.0 BSP INSTANTIATION
+ 3.0 BOOT PROCESS
+ -   3.1 SYSLINUX Boot Loader
+ -   3.2 GRUB Boot Loader
+ 4.0 BOOT MEDIA CREATION
+ -   4.1 Creating an active partition on a USB flash drive from Linux
+ -   4.2 Creating an active partition on a USB flash drive from Windows
+ -   4.3 Creating bootable hard disks from Linux and Windows
+ 5.0 IMAGE CREATION
+ -   5.1 Creating a un-compressed bootrom image
+ -   5.2 Creating a VxWorks VIP kernel image
+ 6.0 FEATURES
+ -   6.1 List of Hardware Features
+ -   6.2 Feature Interactions
+ 7.0 HARDWARE DETAILS
+ -   7.1 Jumpers & Switches
+ -   7.2 Devices
+ -   7.3 Memory Maps
+ -   7.4 Interrupts
+ -   7.5 Interrupt Mode Configuration Using Workbench Command Line Tools
+ -   7.6 MP APIC Configuration Using Workbench Command Line Tools
+ -   7.7 Serial Configuration
+ -   7.8 SCSI Configuration
+ -   7.9 Network Configuration
+ -   7.10 Boot Devices
+ -   7.11 Boot Methods
+ -   7.12 ROM Considerations
+ -   7.13 NITX-300/315 specific issues
+ 8.0 SPECIAL CONSIDERATIONS
+ -   8.1 Make Targets
+ -   8.2 BSP Bootloaders and Bootroms
+ -   8.3 Warm Boot Devices
+ -   8.4 Special Routines
+ -   8.5 Hyper-threading configuration
+ -   8.6 The itl_x86 build models:
+ -   8.7 Changing AP startup time in SMP based configuration
+ 9.0 KNOWN PROBLEMS
+ -   9.1 BIOS constraints and the number of cores available
+ -   9.2 Using legacy interrupts for gei Ethernet device
+ -   9.3 Using MSI interrupts for gei Ethernet device (default)
+ -   9.4 The PCI Express slots are PCI Express Gen2
+ -   9.5 Hardware with Virtual Wire Mode
+ -   9.6 USB Legacy mode can cause problems with VxWorks
+ -   9.7 MTRR
+ -   9.8 BIOS E820 Memory Auto-size
+ 10.0 BOARD LAYOUT
+ 11.0 SEE ALSO
+ 12.0 BIBLIOGRAPHY
+\ce
+
+\" Keep above INDEX section in sync when adding numbered headings.
+\" Use the following command to generate above index on Linux
+\" cat target.ref | grep "\\s*h* [0-9]" | sed -e 's/\\h//g' | sed -e 's/\\sh/ -  /g'
+
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 1.0 INTRODUCTION
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This reference entry provides board-specific information necessary to run
+VxWorks on instantiations of the Unified BSP (itl_x86). Before using a board
+with VxWorks, verify that the board runs in the factory configuration by using
+vendor-supplied ROMs and jumper settings and checking the RS-232 connection.
+
+The Unified BSP has not been developed explicitly for any particular board, but
+instead is intended to run accross different Intel(R) micro-architectures. The BSP
+tool constructs (instantiates) a Unified BSP based on the specified parameters. 
+Refer to `BSP INSTANTIATION' section for details.
+
+Boards with custom or modified BIOS's are not guaranteed to work.
+WindRiver does not provide BIOS updates.
+
+Before using a board with VxWorks, verify that the board runs in the factory
+configuration by using vendor-supplied ROMs and jumper settings.
+
+Refer to`HARDWARE DETAILS' section for CRB specific setup requirements, hardware
+problems and work-arounds.
+
+For best results, the board vendor's documentation should be used in conjunction
+with this document.
+      
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 2.0 BSP INSTANTIATION
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+To instantiate a BSP, the development environment must be setup first using the
+wrenv.sh utility.
+      
+To get the possible instantiation options, change to the BSP tool directory and
+do a make without specifying a target.
+          
+`Default options:'
+          
+\cs     
+    % cd $WIND_BASE/target/config/bspTool/itl
+    % make
+\ce
+    The following error message will be returned:
+\cs
+    error: BOARD = "" does not exist.
+    usage: make BOARD=<board_subdir> [CONFIG=<config_subdir] [BSP_ROOT_DIR=<bsp_instance_rootdir>]
+\ce
+
+A BSP is instantiated by specifying at least the `BOARD' type to use. When a specific
+configuration option is available, it can be applied by specifying the `CONFIG' to use.
+When a BSP is instantiated, and another instantiation is performed with the same
+`BOARD' type, a error message will be presented as follows:
+
+`Re-instantiating a pre-existing BOARD type:'
+
+\cs
+    % make BOARD=x86atom CONFIG=__NITX_315
+\ce
+    The following warning message will be returned:
+\cs
+    CONFIG  = x86atom/__NITX_315
+    FAMILY  = itl
+    BOARD   = x86atom
+    error: "../../itl_x86atom__NITX_315" already exists -- please remove or rename it.
+\ce
+
+The option `BSP_ROOT_DIR' may be used to instantiate a BSP in a different directory
+than the default $WIND_BASE/target/config/itl_\<`BOARD'> directory. This allows users
+to isolate their instantiated BSP specific changes. If the user wants to create an
+instantiated BSP that is in conflict with an already existing instantiated BSP location,
+the current instantiation can be moved or deleted. A new instatiation can then be created
+without specifying a different `BSP_ROOT_DIR'
+
+
+`The unified BSP source directory structure:'
+\cs
+    target/config/bspTool/itl/
+                            |
+                            +-- <BOARD1>
+                            +-- <BOARD2>
+                            |      +-- <__CONFIG1>
+                            |      +-- <__CONFIG2>
+                            |      +-- ...
+                            +-- ...
+\ce
+
+`Instantiation mechanism:'
+
+The instantiation mechanism works by creating the instantiated BSP directory first
+under $WIND_BASE/target/config/ as:
+\cs
+     $WIND_BASE/target/config/itl_<BOARD>
+\ce
+
+All the Unified BSP source files $WIND_BASE/target/config/bspTool/itl/* (not the
+sub-directories), are then copied to the instantiated directory to form the `base files'
+for the instantiated BSP. By specifying a `BOARD' type, the files
+under the sub-directory $WIND_BASE/target/config/bspTool/itl/\<`BOARD'> are copied to
+overwrite the `base files'.
+
+When a specific configuration is specified, it will in turn overwrite the files
+in the instantiated BSP directory, with the fileset present in the specified
+`CONFIG' directory.
+
+`Example instantiation of the unified BSP using the ATOM micro-architecture:'
+\cs
+    % cd $WIND_BASE/target/config/bspTool/itl
+    % make BOARD=x86atom CONFIG=__NITX_315
+\ce
+    The instantiated BSP will be present in the default location:
+\cs
+    $WIND_BASE/target/config/itl_x86atom__NITX_315
+\ce
+
+`Example instantiation in directory $WIND_BASE/target/config/MyBSP/:'
+\cs
+    % mkdir $WIND_BASE/target/config/MyBSP
+    % cd $WIND_BASE/target/config/bspTool/itl
+    % make BOARD=x86atom CONFIG=__NITX_315 BSP_ROOT_DIR=$WIND_BASE/target/config/MyBSP
+\ce
+    The instantiated BSP will be present in:
+\cs
+    $WIND_BASE/target/config/MyBSP/itl_x86atom__NITX_315
+\ce
+
+\ts
+`Supported BOARD Types'
+-----------+-----------------------+------------------
+   BOARD   |   Compiled for ARCH   | Instantiated BSP
+-----------+-----------------------+------------------
+ x86       | PENTIUM4              |   itl_x86
+ x86atom   | ATOM                  |   itl_x86atom
+ x86core2  | CORE                  |   itl_x86core2
+ x86coreix | NEHALEM               |   itl_x86coreix
+-----------+-----------------------+------------------
+\te
+
+`NOTE:'
+\cs
+    target.ref HTML documentation and man pages can be generated for each individual
+    instantiated BSP by doing a "make man" in each instantiated BSP directory.
+\ce
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 3.0 BOOT PROCESS
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section discuss the different boot mechanisms available for use and supported
+by this BSP.
+
+\"--------------------------------------------------------------------------------
+\sh 3.1 SYSLINUX Boot Loader
+\"--------------------------------------------------------------------------------
+`SYSLINUX' is a bootloader, which is able to load bootrom or kernel
+images from a filesystem.
+
+`NOTE:'
+\cs
+    The unified BSP uses SYSLINUX as one option to load either a VxWorks kernel or
+	VxWorks bootrom image. Warm reboots are supported via reboot/CTRL-X
+    methods when using SYSLINUX and a VxWorks bootrom to load the VxWorks kernel.
+    
+    SYSLINUX +-> bootrom_uncmp -+-> VxWorks kernel ->+
+             |                  |                    |
+             |                  V                    V
+             +<-----------------+<-------------------+
+\ce
+
+For information on using SYSLINUX, and create a configuration to load VxWorks images,
+refer to the SYSLINUX wiki at:
+
+http://www.syslinux.org/wiki/index.php/SYSLINUX 
+
+\"--------------------------------------------------------------------------------
+\sh 3.2 GRUB Boot Loader
+\"--------------------------------------------------------------------------------
+\ss
+This BSP does not support using GRUB to load BootApp based images, it can only load
+bootrom, boorom_uncmp, vxWorks images.
+\se
+
+GRUB can load and execute a bootrom image or VxWorks kernel image directly.
+
+VxWorks supports the Multiboot Specification V1. The Multiboot information passed to
+the operating system is acquired from the bootloader.
+
+A typical `menuentry' used in GRUB represents the following:
+\cs
+menuentry "Wind River vxWorks" {
+   multiboot (hd0,msdos1)/images/vxWorks sysbootline:gei(0,0)host:vxWorks e=90.0.0.50 u=target
+}
+\ce
+
+`NOTE:'
+\cs
+    A GRUB loaded VxWorks image does not support "warm" reboot/CTRL-X methods. All
+    reboots will be a forced "cold" boot.
+\ce
+
+For more information on `GRUB' and the `Multiboot Specification' please refer to:
+
+http://www.gnu.org/software/grub/
+
+http://www.gnu.org/software/grub/manual/multiboot/multiboot.html
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 4.0 BOOT MEDIA CREATION
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section describes how to prepare boot devices and media. Creation of VxWorks
+bootroms and VxWorks kernels are discussed in section \<`IMAGE CREATION'>.
+
+Traditionally VxWorks bootrom images were loaded from a FAT16 file-system via a
+`vxld' loader that resided in the MBR (master boot record) of the boot media.
+This restricted the size of the boot file system to 2 Gigabytes or less.
+Since the intended loader for this BSP is not `vxld' but rather `SYSLINUX' or `GRUB',
+that is not a requirement anymore.
+
+\ss
+This section only discuss various ways to create a partition and format it. It does
+not describe how to make the media bootable. To make the boot media's active partition
+bootable, install either SYSLINUX or GRUB. These tools automatically install the
+required MBR needed to load the respective tool.
+\se
+
+It should be noted that most new USB or hard disks are pre-formatted. If this is
+the case with your device, then it is not needed to re-create the active partition
+as long as it is a FAT formatted partition which SYSLINUX or GRUB supports.
+
+\"--------------------------------------------------------------------------------  
+\sh 4.1 Creating an active partition on a USB flash drive from Linux
+\"--------------------------------------------------------------------------------
+`Requirements':
+ - One of the following tools: `parted' or `fdisk'.
+ - Installed `mtools' for formatting.
+
+`Creating a Boot Partition using "parted"':
+
+   Linux provides various tools for partitioning disks. This
+   section discusses parted and fdisk. Note that these utilities do
+   not work with some USB flash drives. Wind River recommends using
+   a USB flash drive from a major producer that has a capacity of
+   no more than 1 GB. The sector size must be 512 bytes. When capacities
+   larger than 2 GB is used and SYSLINUX is used as the loader, make sure
+   to use versions of SYSLINUX later than v3.00, or make use of GRUB.
+
+
+   Using parted
+
+   a. Change to root user and start parted, as follows:
+
+\cs
+      % su root
+      % /sbin/parted /dev/sdb
+\ce
+
+   b. Check the existing partition structure on the drive. At the
+      (parted) prompt, enter print, as follows:
+
+\cs
+      (parted) print
+        Model: SanDisk Cruzer Micro (scsi)
+        Disk /dev/sdb: 512MB
+        Sector size (logical/physical): 512B/512B
+        Partition Table: msdos
+        Number  Start   End    Size   Type     File system  Flags
+         1      31.7kB  512MB  512MB  primary  fat16        boot, lba
+\ce
+
+   c. If the output from the print command indicates that the
+      partition table is not msdos, remove the table and create a
+      new one, and create a new partition, using the following
+      commands:
+
+      1) mktable to change the disk label.
+      2) y to continue.
+      3) msdos for the new disk label.
+      4) mkpart to create a new partition.
+      5) primary for the partition type.
+
+      `Make a choice'
+      5) fat16 for the file system type.
+         or
+      5) fat32 for the file system type.
+
+      7) Enter 0 for start.
+      8) Enter size for the end. Use the size of the drive.
+
+   d. If the output from the print command indicates that the file
+      system of partition 1 is not fat16 or fat32, delete the existing
+      partition, and create a new one using the following commands:
+
+      1) rm 1 to delete the partition.
+      2) mkpart to create a new partition.
+      3) primary for the partition type.
+
+      `Make a choice'
+      4) fat16 for the file system type.                                  
+         or
+      4) fat32 for the file system type.  
+
+      5) Enter 0 for start.
+      6) Enter size for the end. Use the size of the drive.
+
+   e. If the output from the print command does not include the
+      boot flag, use the following command:
+
+\cs
+      toggle 1 boot
+\ce
+
+   f. If necessary, execute print again to verify the msdos
+      partition table with bootable FAT16 or FAT32 file system. The lba flag
+      may be missing.
+
+   g. Exit parted with the quit command.
+
+
+`Creating a Boot Partition using "fdisk"':
+
+   a. Change to root user and start fdisk, as follows:
+
+\cs
+      % su root
+      % /sbin/fdisk /dev/sdb
+\ce
+
+   b. Then use the following commands:
+
+      a) p to show the existing partitions.
+      b) d to delete it.
+      c) p again to show any remaining partitions (if partitions
+         exist, repeat the previous step).
+      d) n to make a new partition.
+      e) p for primary partition.
+      f) 1 to make this the first partition.
+      g) ENTER to use the default first cylinder.
+      h) Enter size to set the partition size. Use the size of the
+         drive, or ENTER to accept default.
+      i) a to make this partition active.
+      j) 1 to select partition 1.
+      k) t to change the partition file system.
+
+      `Make a choice'
+      l) 6 to select the FAT16 file system.
+         or
+      l) c to select the W95 FAT32 (LBA) file system.
+
+      m) w to write the new partition table.
+
+      'Note:' fdisk accepts various syntaxes for specifying the partition size
+      (for example, +128M). You can also simply use the ENTER key to accept the
+      default.
+      Partitions that are larger than 2 GB and thus uses a FAT32 file 
+      system, requires v3.00 or later of SYSLINUX, or the use of GRUB.
+      
+
+`Formatting the created partition':
+
+   a. Configure the mtools drive name by editing (as root)
+      /etc/mtools.conf, adding the following new entry for the USB
+      drive:
+      
+\cs
+      drive u: file="/dev/sdb1"
+\ce
+   
+      'Note:' u: is an arbitrary (but logical) drive name for
+      USB. See the mtools man page for more information.
+   
+   b. From the directory in which the images are located, format
+      the partition and sync the drive, and then eject it, as follows:
+   
+\cs
+      % su root
+      % mformat u:
+      % sync
+      % eject /dev/sdb1 
+\ce
+         
+   c. Unplug the USB Flash drive from your Linux host.
+      
+   d. Refer to `NOTE 3.1'. Install SYSLINUX or GRUB. Configure to load intended image.
+
+   e. Plug the USB Flash drive into your target and change the BIOS setting to boot
+       from USB flash drive.
+
+\ss
+   NOTE 3.1: At step (d) above, the media will have an active formatted partition,
+             that does not have a loader in the MBR. Reference the appropriate
+             documention to install SYSLINUX or GRUB, that will make the media
+             bootable as required by the tool used.
+
+             When using SYSLINUX: [ http://www.syslinux.org/wiki/index.php/SYSLINUX ]
+             When using GRUB    : [ http://www.gnu.org/software/grub/ ]
+
+   FAT16/32: When formatting as FAT32 and using SYSLINUX, make sure to use versions         
+             later than v3.00
+\se
+
+\"--------------------------------------------------------------------------------
+\sh 4.2 Creating an active partition on a USB flash drive from Windows
+\"--------------------------------------------------------------------------------
+`Requirements':
+ - Windows 7 `diskpart.exe' utility that is distributed with Windows.
+
+The `diskpart' utility will be used to correct disks that do not have a partition set
+to active and format them with a FAT or FAT32 file-system.
+
+   a. Insert a USB flash drive to host and find the USB drive device name.
+
+   b. In a DOS command shell run the following commands to ensure USB drive is
+      Configured with an active partition.
+
+      Execute `diskpart' as administrator, and then list the disks.
+
+      'NOTE': Commands below are indicated after the `DISKPART>" prompt.
+
+\cs
+      DISKPART> list disk
+
+        Disk ###  Status         Size     Free     Dyn  Gpt
+        --------  -------------  -------  -------  ---  ---
+        Disk 0    Online          465 GB  1024 KB
+        Disk 1    Online         1907 MB      0 B
+\ce
+
+      Observe USB drive number in the displayed list (USB is Disk 1) and select disk 1
+
+\cs
+      DISKPART> select disk 1
+
+      Disk 1 is now the selected disk.
+\ce
+
+      List disks again to make sure you have the correct drive selected, indicated
+      by the "*" character.
+
+\cs
+      DISKPART> list disk
+
+        Disk ###  Status         Size     Free     Dyn  Gpt
+        --------  -------------  -------  -------  ---  ---
+        Disk 0    Online          465 GB  1024 KB
+      * Disk 1    Online         1907 MB      0 B
+\ce
+
+      Clean the disk, create primary partition and make it active as indicated below.
+
+\cs
+      DISKPART> clean
+
+      DiskPart succeeded in cleaning the disk.
+
+      DISKPART> create partition primary
+
+      DiskPart succeeded in creating the specified partition.
+
+      DISKPART> select partition 1
+
+      Partition 1 is now the selected partition.
+
+      DISKPART> active
+
+      DiskPart marked the current partition as active.
+\ce
+
+      Now format the disk as fat or fat32. It will take about 2 minutes, depending on the disk size.
+
+      `when FAT16 file-system is desired':
+\cs
+      DISKPART> format fs=fat
+
+        100 percent completed
+
+      Diskpart successfully formatted the volume.
+\ce
+
+      `when FAT32 file-system is desired':
+\cs
+      DISKPART> format fs=fat
+
+        100 percent completed
+
+      Diskpart successfully formatted the volume.
+\ce
+
+      Assign a drive letter and exit.
+
+\cs
+      DISKPART> assign
+
+      DiskPart successfully assigned the drive letter or mount point.
+
+      DISKPART> exit
+\ce
+
+      Note the drive letter that is assigned to the USB drive.
+
+   c. Refer to `NOTE 3.2'. Install SYSLINUX or GRUB. Configure to load intended image.
+
+   d. Plug the USB Flash drive into your target and change the BIOS setting to boot
+       from USB flash drive.
+
+\ss
+    NOTE 3.2: At step (c) above, the media will have an active formatted partition,
+              that does not have a loader in the MBR. Reference the appropriate
+              documention to install SYSLINUX or GRUB, that will make the media
+              bootable as required by the tool used.
+
+              When using SYSLINUX: [ http://www.syslinux.org/wiki/index.php/SYSLINUX ]
+              When using GRUB    : [ http://www.gnu.org/software/grub/ ]
+
+    FAT16/32: When formatting as FAT32 and using SYSLINUX, make sure to use versions
+              later than v3.00
+
+\se
+
+\"--------------------------------------------------------------------------------
+\sh 4.3 Creating bootable hard disks from Linux and Windows
+\"--------------------------------------------------------------------------------
+The procedure to create a bootable hard disk is the same as the procedures when
+using a USB drive.
+
+Connect a SATA hard disk to host and if no suitable FAT formatted active partition
+exist on the drive, follow the steps in section <BOOT MEDIA CREATION> used
+with USB disk devices.
+
+Install SYSLINUX or GRUB. Configure to load intended image.
+
+\ss
+    NOTE: By default the disk media may have an active formatted partition,
+          that does not have a loader in the MBR. Reference the appropriate
+          documention to install SYSLINUX or GRUB, that will make the media
+          bootable as required by the tool used.
+
+          When using SYSLINUX: [ http://www.syslinux.org/wiki/index.php/SYSLINUX ]
+          When using GRUB    : [ http://www.gnu.org/software/grub/ ]
+
+    FAT16/32: When formatting as FAT32 and using SYSLINUX, make sure to use versions
+              later than v3.00
+\se
+
+Reconnect the SATA drive to the target board, and Change the BIOS setting to boot
+from the SATA drive.
+
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 5.0 IMAGE CREATION
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section describes how to prepare VxWorks bootrom and VxWorks kernel images.
+
+`NOTE:'
+    VxWorks kernel images or VxWorks bootrom images are created using the
+    instantiated BSP as the source BSP.'
+
+Refer to section <`BSP INSTANTIATION'> for instructions to instantiate a BSP.
+
+\"--------------------------------------------------------------------------------
+\sh 5.1 Creating a un-compressed bootrom image
+\"--------------------------------------------------------------------------------
+`Requirements':
+ - The development environment must be setup first using the wrenv.sh utility.
+ - A BSP needs to be instantiated based on a \<BOARD> selection.
+ - Reference section <`BSP INSTANTIATION'> for instructions to instantiate a BSP.
+ - Reference section <`Make Targets'> for the supported `make' targets this BSP support.
+
+To create an un-compressed (`bootrom_uncmp') image that can be loaded via SYSLINUX or
+GRUB, change to the instantiated BSP directory and make the `bootrom_uncmp' target. 
+
+\cs
+    % cd $WIND_BASE/target/config/itl_<BOARD>
+    % make clean
+    % make bootrom_uncmp
+\ce
+
+Use the resulting file: (`$WIND_BASE/target/config/itl_\<BOARD>/bootrom_uncmp') as
+the boot file that SYSLINUX or GRUB loads.
+
+\"--------------------------------------------------------------------------------
+\sh 5.2 Creating a VxWorks VIP kernel image
+\"--------------------------------------------------------------------------------
+`Requirements':
+ - The development environment must be setup first using the wrenv.sh utility.
+ - A BSP needs to be instantiated based on a \<BOARD> selection
+ - Reference section <`BSP INSTANTIATION'> for instructions to instantiate a BSP.
+
+There are two ways to create a VIP/VxWorks kernel that can be loaded via a bootrom.
+Users can use the VxWorks Development Shell and the `vxprj' facility, or use Workbench.
+
+`1) Creating a VxWorks kernel image using the vxprj facility.'
+    
+Open a VxWorks Development Shell in the project directory "$WIND_BASE/target/proj".
+        
+Now run the following commands to create your kernel project directory:
+
+\cs
+    vxprj create -force itl_<BOARD> gnu itl_<BOARD>_gnu
+    vxprj create -force itl_<BOARD> gnu -profile PROFILE_STANDALONE_DEVELOPMENT itl_<BOARD>_gnu
+\ce
+        
+
+`2) Creating a VxWorks kernel image using Workbench.'
+        
+Use the following steps to build VxWorks kernel image
+        
+\cs
+    -> File
+      -> New
+        -> Other
+          -> VxWorks Image Project
+             Specify your project name in "Project name:" field
+            -> Next
+               Select "BSP:" itl_<BOARD>
+               Select "Tool chain:" as gnu
+              -> Next
+                 Tick SMP support if desired and supported by your board
+                 Tick other available options if desired
+                -> Next
+                   Leave profile on default (no profile)
+                  -> Next
+                    -> Finish
+
+    -> Right click on project just created
+      -> Edit Kernel Configuration
+    -> Right click on "vxWorks (default)"
+      -> Build Target
+\ce
+
+    "vxWorks" should be copied to a location accessible by the bootrom.
+
+
+`3) NOTES'
+
+When running on a CRB that has Hyper-threading enabled, and it is indicated as supported
+by the target platform, then also add the appropriate SMT scheduler component if desired:
+
+    `Adding the required component via VxWorks Development shell'
+
+    Change directory to your project directory "$WIND_BASE/target/proj/<projectDir>"
+\cs
+    vxprj component add INCLUDE_SMP_SCHED_SMT_POLICY
+\ce
+
+    Now rebuild your project
+\cs
+    vxprj build
+\ce
+    
+    `Adding the required component via Workbench'
+      
+\cs
+    -> Right click on your project
+      -> Edit Kernel Configuration
+        -> Click on Components tab
+          -> Navigate to: operating system components (default)
+            -> Navigate to: kernel components (default)
+              -> Navigate to: SMP scheduler policy selector
+                 Right click on SMP scheduler policy with SMT support
+                -> Include
+                  -> Finish
+\ce
+
+    Now rebuild your project
+\cs
+    -> Right click on "vxWorks (default)"
+      -> Build Target
+\ce
+
+For detailed information about SMT (Simultaneous multithreading), please refer to the
+\tb VxWorks Programmer's Guide: Architecture Supplement
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 6.0 FEATURES
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section describes all features of the board, supported or not.
+It documents all configurations of the board and the interaction between
+features and configuration items.
+
+\"--------------------------------------------------------------------------------
+\sh 6.1 List of Hardware Features
+\"--------------------------------------------------------------------------------
+
+\ts
+Hardware Interface     | Driver/Component                | Status
+-----------------------+---------------------------------+--------
+UART:0                 | vxbNs16550Sio.c                 | SUPPORTED
+SATA                   | vxbAhciStorage.c                | SUPPORTED
+PATA                   | vxbPiixStorage.c                | SUPPORTED
+TIMER                  | vxbI8253Timer.c                 | SUPPORTED
+TSC                    | vxbIntelTimestamp.c             | SUPPORTED
+USB2-HOST              | USB EHCI driver                 | SUPPORTED
+USB2-HOST              | USB UHCI driver                 | SUPPORTED
+Ethernet               | gei825xxVxbEnd.c                | SUPPORTED
+Ethernet               | fei8255xVxbEnd.c                | SUPPORTED
+Ethernet               | rtl8169VxbEnd.c                 | SUPPORTED
+Ethernet               | vxbIntelTopcliffEnd.c           | SUPPORTED
+RTC                    | vxbMc146818Rtc.c                | UNSUPPORTED
+VIRTUAL-CONSOLE        | vxbM6845Vga.c                   | SUPPORTED
+PS2                    | vxbI8042Kbd.c                   | SUPPORTED
+VIDEO-DECODE           | n/a                             | UNSUPPORTED
+AUDIO                  | n/a                             | UNSUPPORTED
+LPC                    | n/a                             | UNSUPPORTED
+-----------------------+---------------------------------+--------
+\te
+
+\"--------------------------------------------------------------------------------
+\sh 6.2 Feature Interactions
+\"--------------------------------------------------------------------------------
+Refer to the board vendor's documentation.
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 7.0 HARDWARE DETAILS
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section documents the details of the device drivers and board hardware elements.
+
+\"--------------------------------------------------------------------------------
+\sh 7.1 Jumpers & Switches
+\"--------------------------------------------------------------------------------
+Please refer to the board vendor's documentation.
+
+By default VxWorks is not configured for Hyper-threading.
+
+If Hyper-threading support is desired and available, then the correct steps have
+to be taken to add SMT bundles for the supported targets, and make sure it is
+enabled under the BIOS setup utility.
+Refer to section `SPECIAL CONSIDERATIONS -> Hyper-threading configuration.'
+
+The on/off switch must be pressed for approximately five seconds to power off the board.
+
+This BSP supports both AHCI and IDE SATA hard drives. BIOS settings should
+be changed according to which kind of hard drives are used.
+
+Some hardware does not have traditional floppy drive support.
+BIOS Legacy USB Support feature provides keyboard and floppy drive support via USB.
+
+\"--------------------------------------------------------------------------------
+\sh 7.2 Devices
+\"--------------------------------------------------------------------------------
+\is
+\i `ns16550'
+Used as driver for UARTs. It is compatible with generic NS16550 serial IC's.
+
+\i `PC Console'
+This function will set the PC monitor as the VxWorks console, and is configured
+as the default console for instantiated BSPs.
+\cs
+    vxprj component add INCLUDE_PC_CONSOLE
+\ce
+
+\i `m6845Vga'
+Driver for the Motorola M6845 VGA controller. This driver is included by default
+for instantiated BSPs in order to output Text Mode charaters on VGA when the
+component INCLUDE_PC_CONSOLE is included in a vxprj or Workbench project.
+
+\i `vxbAhciStorage'
+Vxbus Driver for the SATA hard disk controller. To use this driver, the
+INCLUDE_DRV_STORAGE_AHCI component must be included in your vxprj or Workbench
+project.
+\cs
+    vxprj component add INCLUDE_DRV_STORAGE_AHCI
+\ce
+
+\i `vxbPiixStorage'
+Vxbus Driver for the IDE/ATA hard disk controller.
+To use this driver, include the INCLUDE_DRV_STORAGE_PIIX component in your
+vxprj or Workbench project.
+\cs
+    vxprj component add INCLUDE_DRV_STORAGE_PIIX
+\ce
+
+\i `HPET' (High Precision Event Timer)
+This driver is required for SMP based images for timestamp. It can also be
+included in UP images to make use of the HPET for timestamp. To include the
+HPET for timestamp usage, add it to your VxWorks kernel project as follows:
+\cs
+    vxprj component add INCLUDE_HPET_TIMESTAMP
+\ce
+
+\i `vxbI8253Timer'
+This library contains a board-independent interface for manipulating the
+timer functions on Intel 8253 and compatible timer chip devices.
+
+By default, only counter 0 is configured in hwconf.c. If the other counters
+are to be used, i8253DevResources[] can be modified as follows
+
+\cs
+struct hcfResource i8253DevResources[] = {
+    { "regBase", HCF_RES_INT, {(void *)PIT_BASE_ADR} },
+    { "clkFreq", HCF_RES_INT, {(void *)PIT_CLOCK} },
+    { "intr0", HCF_RES_INT, {(void *)INUM_TO_IVEC (INT_NUM_IRQ0)}},
+    { "intr0Level", HCF_RES_INT, {(void *)PIT0_INT_LVL}},
+    { "intr1", HCF_RES_INT, ....................................},
+    { "intr1Level", HCF_RES_INT, ...............................},
+    { "intr2", HCF_RES_INT, ....................................},
+    { "intr2Level", HCF_RES_INT, ...............................},
+    { "clkRateMin", HCF_RES_INT, {(void *)SYS_CLK_RATE_MIN} },
+    { "clkRateMax", HCF_RES_INT, {(void *)SYS_CLK_RATE_MAX} },
+    { "regInterval",HCF_RES_INT, {(void *)PIT_REG_ADDR_INTERVAL} }
+};
+\ce
+
+It is strongly recommended that users consult the documentation
+for the target hardware platform prior to updating i8253DevResources.
+In particular, users should know how the outputs of the timer channels
+are connected on the target hardware platform.
+
+As an example of why it is important to consider how an 8253-compatible
+device is integrated into the system, consider how such devices were often
+implemented in legacy consumer desktop applications.  The 8253-compatible
+chips usually contain three timers.  Typically, all three timers are driven
+by a 14.31818 MHz crystal input from the system board, divided by 12, to
+yield a 1.19318 MHz input clock to the timers.  The outputs from each
+timer channel were, and are, often connected as follows in desktop
+systems:
+
+\bs
+                       8253
+                 +---------------+
+                 |    Timer 2    |
+ from bit 0      |         output+------> to speaker circuitry
+ of port 61h ----+->gate         |
+                 |               |
+ 1.19318 MHz ----+->clk 2        |
+                 |               |
+                 +---------------+
+                 |    Timer 1    |
+ +5 V            |         output+------> DRAM refresh
+ (logic 1)--+----+->gate         |
+            |    |               |
+ 1.19318 MHz ----+->clk 1        |
+            |    |               |
+            |    +---------------+
+            |    |    Timer 0    |
+            |    |         output+------> to IRQ0 (timer interrupt)
+            +----+->gate         |
+                 |               |
+ 1.19318 MHz ----+->clk 0        |
+                 |               |
+                 +---------------+
+\be
+
+As indicated in the diagram, the output of timer channel 2 is connected to
+nothing other than the speaker.  The output of timer 2 is not connected to
+the 8259 PIC or other type of interrupt controller.
+
+The output from timer channel 1 is dedicated to providing DRAM refresh.
+As a result, this timer should not be manipulated once it is programmed
+appropriately for the system DRAM.
+
+Because the output from timer channel 0 in the example above is connected
+to an interrupt controller and is not used as a time base for a system
+critical function (i.e., DRAM refresh), timer 0 is a good candidate for use
+as a programmable system or auxiliary clock device.
+
+The example above is but one possible way 8253-compatible timer devices
+might be integrated into a target system.  Some system boards may connect
+all timer channel outputs to an interrupt controller.  Not every system
+will connect timer channel outputs to DRAM refresh or to a speaker.
+Again, users are encouraged to consult the target hardware documentation
+in order to understand the requirements for a particular system.
+
+\i `Clock Rate Set routines'
+The macros SYS_CLK_RATE_MIN, SYS_CLK_RATE_MAX, AUX_CLK_RATE_MIN, and
+AUX_CLK_RATE_MAX must be defined to provide parameter checking for the
+sys[Aux]ClkRateSet() routines.
+
+\i `vxbIntelTimestamp'
+This is the driver for the timestamp on Intel(R) processor. To use the timestamp
+feature, include the DRV_TIMER_IA_TIMESTAMP component in your vxprj or Workbench
+project. This is included as the default timestamp driver for UP configurations.
+\cs
+    vxprj component add DRV_TIMER_IA_TIMESTAMP
+\ce
+
+\i `vxbLoApicTimer'
+This library contains routines to manipulate the timer functions on the
+Local APIC/xAPIC Timer with a board-independent interface.
+
+\i `APIC/xAPIC frequency'
+At initialization, the vxbLoApicTimer timer driver calculates the clock
+frequency of the Local APIC/xAPIC Timer only when the APIC_TIMER_CLOCK_HZ
+parameter is set to 0 (default).  Otherwise, the specified value will be
+applied as the clock frequency.  If this value is set manually, it must
+match the actual frequency of the timer hardware to ensure accurate timekeeping.
+Platform specific operating frequencies can only be obtained from the
+appropriate Intel proprietary documentation.
+
+This value can be set using workbench or with the vxprj commmand line (VIP):
+
+\cs
+vxprj parameter set APIC_TIMER_CLOCK_HZ 133330000
+\ce
+
+\i `nullNvRam'
+This library contains dummy non-volatile RAM manipulation routines for targets
+lacking non-volatile RAM.  Read and write routines that return ERROR are included.
+
+The macro NV_RAM_SIZE should be configued as NONE for targets lacking
+non-volatile RAM.
+
+For vxprj based images, the default value for NV_RAM_SIZE is set based on the
+SYS_WARM_TYPE parameter. NV_RAM_SIZE is set to NONE for the SYS_WARM_BIOS
+setting.  See section on warm boot devices for SYS_WARM_START configuration.
+
+\i `Ethernet'
+The following Ethernet drivers are included by default for instantiated BSPs
+\ts
+------------------------+-----------------------------------------------------
+ Driver                 | Description
+------------------------+-----------------------------------------------------
+ gei825xxVxbEnd.c       | Intel PRO/1000 VxBus END driver
+ fei8255xVxbEnd.c       | Intel PRO/100 VxBus END driver
+ rtl8169VxbEnd.c        | RealTek 8139C+/8101E/816x/811x VxBus Ethernet driver
+ vxbIntelTopcliffEnd.c  | Intel Topcliff VxBus END driver
+------------------------+-----------------------------------------------------
+\te
+
+\i `USB Support'
+This BSP supports USB 1.1/2.0
+
+Flash sticks, hubs, keyboard and mouse have been tested with this BSP
+instantiations. If you experience any issues with USB hub support, a
+support request should be filed with Wind River Support to see if
+there are any current patches to the USB stack.
+
+Finally, when using flash sticks, be sure to set the configuration
+parameter BULK_MAX_DRIVES to the maximum number of flash sticks that
+can be inserted simultaneously (the default is 2) and
+BULK_NON_REMOVABLE_DISK to TRUE (default is FALSE). Setting
+BULK_NON_REMOVABLE_DISK to FALSE can cause exceptions in the USB
+stack.
+\ie
+
+\"--------------------------------------------------------------------------------
+\sh 7.3 Memory Maps
+\"--------------------------------------------------------------------------------
+Refer to `VxWorks Memory Layout' section in <VxWorks Architecture Supplement>
+and the <VxWorks BSP Developers Guide> for information regarding memory mapping.
+
+\"--------------------------------------------------------------------------------
+\sh 7.4 Interrupts
+\"--------------------------------------------------------------------------------
+All ISA interrupts are external to the CPU and are routed
+through the ISA interrupt prioritization hardware.  This hardware is
+comprised of two 82C59 PICs.  There are 16 ISA interrupts and
+interrupt priority levels numbered 0 through 15. The mapping between
+interrupt numbers and priority levels is not necessarily one to one.
+The motherboard hardware determines the mapping of interrupt
+request lines (IRQ) to priority levels. The hardware should
+adhere to the standard ISA assignments:
+
+
+            IRQ         Priority
+            ---         --------
+             0              0
+             1              1
+             2              2
+             3             11
+             4             12
+             5             13
+             6             14
+             7             15
+             8              3
+             9              4
+            10              5
+            11              6
+            12              7
+            13              8
+            14              9
+            15             10
+
+IRQs 0 - 7 are handled by PIC1 and IRQs 8 - 15 by PIC2.  PIC2 interrupts are
+cascaded into PIC1 at IRQ2 which is reflected in the above table.
+The Fully Nested Mode is used only when the additional interrupt modes are
+left undefined.
+
+\is
+\i `Fully Nested Mode.'
+In this mode, interrupt requests are ordered in priority
+from 0 through 7 (0 is the highest).  When an interrupt is acknowledged the
+highest priority request is determined and its vector is placed on the bus.
+Additionally, a bit of the Interrupt Service (IS) register is set.  This bit
+remains set until the microprocessor issues an EOI command immediately before
+returning from the service routine.  While the IS bit is set, all further
+interrupts of the same or lower priority are inhibited, while higher level
+interrupts are allowed.  The PICs in a PC typically operate in this mode
+(normal nested mode).  In this mode, while the slave PIC is being
+serviced by the master PIC, the slave PIC blocks all higher priority
+interrupt requests.  Alternatively, to allow interrupts of a higher priority,
+enable the Special Fully Nested Mode.
+
+\i `Special Fully Nested Mode' (PIC_SPECIAL_FULLY_NESTED_MODE):
+This mode is similar to the Fully Nested Mode with the following exceptions:
+1) When an interrupt request from a slave PIC is in service, the slave is
+not locked out from the master's priority logic and further interrupt
+requests from higher priority IRs within the slave will be recognized by
+the master and will initiate interrupts to the processor.  2) When exiting
+the interrupt service routine, the software must check whether or not the
+interrupt serviced was the only interrupt request from the slave.  If it
+was the only interrupt request, a non-specific EOI is sent to the master.
+If not, no EOI is sent.
+
+
+The PIC(8259A) IRQ0 is hard wired to the PIT(8253) channel 0 in a PC
+motherboard.  IRQ0 is the highest priority in the 8259A interrupt
+controller.  Thus, the system clock interrupt handler blocks all lower
+level interrupts.  This may cause a delay of the lower level interrupts in
+some situations even though the system clock interrupt handler finishes its
+job without any delay.  This is quite natural from the hardware point
+of view, but may not be ideal from the application software standpoint.
+The following modes are supplied to mitigate this situation by providing the
+corresponding configuration macros in the BSP.  The three modes are
+mutually exclusive.
+
+\i `Early EOI Issue in IRQ0 ISR' (PIC_EARLY_EOI_IRQ0):
+In this mode, the EOI is issued before the IRQ0 system clock interrupt
+service routine starts the kernel work.  This lowers the IRQ0 ISR blocking
+level to the next lower level.  If no IRQs are in service, the next lower
+level is the lowest level.  If IRQn is in service, the next lower level
+corresponds to the next lower priority.  As a result, the kernel work in
+the system clock interrupt service routine can be interrupted by an
+interrupt with a higher priority than the blocking level.
+
+\i `Special Mask Mode in IRQ0 ISR' (PIC_SPECIAL_MASK_MODE_IRQ0):
+In this mode, the Special Mask Mode is used in the IRQ0 system clock
+service routine.  This lowers the blocking level to the specified level
+(currently hard coded to the lowest level in i8259Intr.c).
+
+\i `Automatic EOI Mode' (PIC_AUTO_EOI):
+This mode provides no nested multi-level interrupt structure in PIC1.
+The EOI command is automatically sent to the master PIC at the end of the
+interrupt acknowledge cycle.  Thus, no software intervention is needed.
+
+This BSP supports the APIC/xAPIC (Advanced Programmable Interrupt Controller)
+which consists of Local APIC/xAPIC (on-chip) and IO APIC/xAPIC (on chipset).
+They are used in two additional interrupt modes that are configurable in
+a instantiated BSP.
+
+\i `Virtual Wire Mode': One of three interrupt modes defined by the MP
+specification.  In this mode, interrupts are generated by the 8259A
+equivalent PICs, but delivered to the BSP by an APIC that is programmed to
+act as a "virtual wire"; that is, the APIC is logically indistinguishable
+from a hardware connection.  This is a uniprocessor compatibility mode.
+If the Local APIC exist in the processor indicated by APIC feature flag
+in the CPUID, this mode can be configured and used.
+To use this mode, include the INCLUDE_VIRTUAL_WIRE_MODE component in your
+VxWorks VIP or Workbench project.
+\cs
+    vxprj component add INCLUDE_VIRTUAL_WIRE_MODE
+\ce
+
+\ss
+NOTE: Under current implementation, This mode is not the first boot opitions, theoretically
+      It can work on all board with APIC, but we didn't test it on all board.
+\se
+
+\i `Symmetric IO Mode': One of three interrupt modes defined by the MP
+specification.  In this mode, the APICs are fully functional, and
+interrupts are generated and delivered to the processors by the APICs.
+Any interrupt can be delivered to any processor.  This is the only
+multiprocessor interrupt mode.  If the Local APIC exist in the processor
+indicated by APIC feature flag in the CPUID and the IO APIC in the chipset
+is available, this mode can be configured and used.  The PIRQ[n] is
+directly handled by the IO APIC in this mode.
+
+Symmetric IO mode is the default interrupt mode used for the unified
+instantiated BSPs, and ACPI mptable is the default table resource method used
+which is configured via the INCLUDE_ACPI_BOOT_OP component.
+
+\ss
+NOTE: Under current implementation, when a VxWorks kernel is built with the
+      INCLUDE_SYMMETRIC_IO_MODE component, then the bootrom should be built
+      using the same component.
+
+NOTE: SMP support requires the inclusion of the INCLUDE_SYMMETRIC_IO_MODE
+      component, thus for SMP based images the bootrom should be built using
+      the INCLUDE_SYMMETRIC_IO_MODE component as well.
+      One can validate that the proper bootrom is in use by observing the
+      bootrom prompt.
+      SYS_MODEL displayed should be seen with "... SYMMETRIC IO" appended to
+      the description.
+
+NOTE: When moving from UP to an SMP image, or from SMP to UP image, a "cold"
+      boot is required.
+
+NOTE: Static configuration of mpApic data table may be performed in this BSP.
+
+      The static configuration table for mpApicData structure, allows for manual
+      configuration of mpApic driver.
+
+      One must be very careful when manually configuring Apics, incorrect data
+      will cause catastrophic errors, including the BSP failing to boot properly.
+
+      The data being manipulated is dependent on the number of cpus involved,
+      interrupt routing tables, etc., basically the general configuration
+      of your specific hardware.
+
+      Access to this capability is obtained by adding the INCLUDE_USR_BOOT_OP
+      component to your project using the vxprj facility.
+
+      MP_MP_STRUCT option is used by default to configure mpApic data structure
+      based off the BIOS's _MP_ data structure (MultiProcessor Specification v1.4).
+      To statically configure the mpApic data structure one sets "mpBootOp" to
+      USR_MP_STRUCT and then one must flush out the staticMpApicData array,
+      defined in sysLib.c, to provide all the information needed in the
+      MP_APIC_DATA structure defined in vxbMpApic.h.  Access to this capability
+      is obtained by adding the INCLUDE_MPTABLE_BOOT_OP component to your
+      project using the vxprj facility.
+
+      ACPI_MP_STRUCT option is used to configure mpApic data structure using the
+      ACPI tables (ACPI Specification v4.0).  Access to this capability is obtained
+      by adding the INCLUDE_ACPI_BOOT_OP component to your project using the vxprj facility.
+
+\se
+\ie
+
+`Retrieving ACPI generated information:'
+
+The Unified BSP instantiations includes ACPI show routines by default in the
+bootrom_uncmp (built from an BSP instantiation), and VxWorks kernel image
+projects.
+
+`The following component is included (as default) in a VxWorks kernel project:'
+
+\cs
+    vxprj component add INCLUDE_ACPI_BOOT_OP
+\ce
+
+\ss
+NOTE: Instantiated BSP bootroms allows the use of `vxMpTablePrint'. Help for
+      the bootrom shell command line is invoked by pressing "?"
+
+NOTE: Since the default output for instantiated BSPs are to VGA text mode, the
+      data cannot be captured. Therefore it is required to configure serial
+      port output which allows MP Data to be captured via a terminal application.
+\se
+
+Now boot the bootrom or VxWorks kernel and once booted, execute the following
+command at the boot shell prompt:
+
+\cs
+    vxMpTablePrint
+\ce
+
+
+The information contained in the output can be captured and entered into
+the static structure. Using a static MP Table requires the implementation of
+a `sysStaticMpApicDataGet' routine that will copy the MP Data in the static
+structure, to the MP Data structure in memory, and is beyond the scope of this
+document. Reference legacy BSPs for examples how to set up a static table.
+
+Once  static tables has been configured and a `sysStaticMpApicDataGet' routine
+implemented for a instantiated BSP, the VxWorks kernel project or bootrom
+can be recreated or updated by adding the following component to make use of
+the static table:
+
+\cs
+    vxprj component add INCLUDE_USR_BOOT_OP
+\ce
+
+Re-compile your project as described in the section `IMAGE CREATION'.
+
+\"--------------------------------------------------------------------------------
+\sh 7.5 Interrupt Mode Configuration Using Workbench Command Line Tools
+\"--------------------------------------------------------------------------------
+The following interrupt mode configuration components are supported using vxprj:
+\ss
+    INCLUDE_PIC_MODE
+    INCLUDE_SYMMETRIC_IO_MODE (default)
+    INCLUDE_VIRTUAL_WIRE_MODE
+\se
+
+At least one interrupt mode is required, so always add the desired component to the
+project.  It is not necessary to remove a component before adding a different selection.
+The old selection will be automatically removed by vxprj.
+\cs
+    vxprj component add INCLUDE_PIC_MODE
+    vxprj component add INCLUDE_SYMMETRIC_IO_MODE
+    vxprj component add INCLUDE_VIRTUAL_WIRE_MODE
+\ce
+
+\"--------------------------------------------------------------------------------
+\sh 7.6 MP APIC Configuration Using Workbench Command Line Tools
+\"--------------------------------------------------------------------------------
+For symmetric I/O and virtual wire modes, there is a component selection which controls
+bootrom mpApicData structure creation:
+\ss
+    INCLUDE_MPTABLE_BOOT_OP - create structure using the BIOS MP table
+    INCLUDE_USR_BOOT_OP - create the structure using the user defined static configuration
+\se
+
+When no method is selected to create the mpApicData structure, ACPI tables will be used.
+This is equivalent to adding the INCLUDE_ACPI_BOOT_OP component, which is used as default:
+\ss
+    INCLUDE_ACPI_BOOT_OP - create structure using the ACPI tables
+\se
+
+When PIC mode is in use, not mpApicData method is required:
+\ss
+    INCLUDE_NO_BOOT_OP - no mpApicData used
+\se
+
+The default behavior is to use the structure provided by the bootrom.
+
+To select one of the supported MP APIC options, add the component to the
+project.  At least one option is required for a bootrom or VxWorks VIP project
+when symmetric I/O or virtual wire mode is used.
+\cs
+    vxprj component add INCLUDE_MPTABLE_BOOT_OP
+    vxprj component add INCLUDE_ACPI_BOOT_OP
+    vxprj component add INCLUDE_USR_BOOT_OP
+\ce
+
+\ss
+NOTE: MP APIC options are not valid while in PIC mode.  Remove any MP APIC components
+      when adding the INCLUDE_PIC_MODE component.
+\se
+\cs
+      vxprj component remove INCLUDE_MPTABLE_BOOT_OP
+      -- or --
+      vxprj component remove INCLUDE_ACPI_BOOT_OP
+      -- or --
+      vxprj component remove INCLUDE_USR_BOOT_OP
+\ce
+      Then add the following
+\cs
+      vxprj component add INCLUDE_PIC_MODE
+\ce
+
+\"--------------------------------------------------------------------------------
+\sh 7.7 Serial Configuration
+\"--------------------------------------------------------------------------------
+Default configuration is:
+    Baud Rate: 115200
+    Data: 8 bit
+    Parity: None
+    Stop: 1 bit
+    Flow Control: None
+
+
+\"--------------------------------------------------------------------------------
+\sh 7.8 SCSI Configuration
+\"--------------------------------------------------------------------------------
+Not applicable for unified BSP instantiations, unless a PCIe or PCI SCSI card
+is plugged into the board. In this case, the SCSI chip on the card
+would have to be supported by a VxWorks driver. Contact support
+with any questions.
+
+\"--------------------------------------------------------------------------------
+\sh 7.9 Network Configuration
+\"--------------------------------------------------------------------------------
+This BSP provides support for VxBus drivers, including network
+drivers.  Within Workbench, inclusion of VxBus drivers is
+accomplished by adding the device.  No modifications to the
+BSP are required.  Effective as of the VxWorks 6.4 release, the
+list of VxBus network drivers available for PCI devices includes
+the following:
+
+    INCLUDE_AM79C97X_VXB_END
+    INCLUDE_AN983_VXB_END
+    INCLUDE_FEI8255X_VXB_END
+    INCLUDE_GEI825XX_VXB_END
+    INCLUDE_MVYUKONII_VXB_END
+    INCLUDE_MVYUKON_VXB_END
+    INCLUDE_NS8381X_VXB_END
+    INCLUDE_RTL8139_VXB_END
+    INCLUDE_RTL8169_VXB_END
+    INCLUDE_TC3C905_VXB_END
+
+For command line builds using the vxprj facility, add the desired driver.
+
+    Example adding the GEI driver:
+\cs
+    vxprj component add INCLUDE_GEI825XX_VXB_END
+\ce
+
+VxWorks support non-VxBus END drivers. Please refer to legacy pcPentium4 BSP for
+reference to add support.
+
+\"--------------------------------------------------------------------------------
+\sh 7.10 Boot Devices
+\"--------------------------------------------------------------------------------
+The supported boot devices are:
+
+\ss
+    `xx' - Ethernet: Reference section <`Network Configuration'>
+
+    `fs' - USB disk
+
+    `fs' - File system boot of images with built in symbol table
+\se
+
+\"--------------------------------------------------------------------------------
+\sh 7.11 Boot Methods
+\"--------------------------------------------------------------------------------
+The boot methods are affected by the boot parameters.
+\is
+\i `no password specified'
+RSH (remote shell) protocol will be used.
+
+\i `password specified'
+FTP protocol will be used
+
+\i `if flag (0x4) is set'
+Automatic boot will be turned off.
+
+\i `if flag (0x40) is set'
+Auto-configure Ethernet via DHCP.
+
+\i `if flag (0x80) is set'
+TFTP protocol will be used.
+
+\i `if flag (0x400) is set'
+System will be booted in DEBUG mode.
+\ie
+
+\"--------------------------------------------------------------------------------
+\sh 7.12 ROM Considerations
+\"--------------------------------------------------------------------------------
+Not applicable to this BSP
+
+\"--------------------------------------------------------------------------------
+\sh 7.13 NITX-300/315 specific issues
+\"--------------------------------------------------------------------------------
+`UART':
+By default the Unified BSP will instantiate a BSP that use PC_CONSOLE (VGA Text Mode)
+for output. When serial output is used instead (by removing support for PC_CONSOLE)
+the serial port on the NITX-300/315 will not be usable with the default instantiated
+configuration.
+
+The default configuration for an instantiated BSP, will have the UART device configured
+on the PLB bus. The NITX-300/315 need a configuration (hwconf.c) that allows the
+UARTs to be probed on the PCI bus instead.
+
+To instantiate a BSP for the NITX-300/315 we use the ATOM architecture and a
+configuration set to `__NITX_315'.
+
+`Instantiation of the unified BSP for the NITX supporting serial output':'
+\cs
+    % cd $WIND_BASE/target/config/bspTool/itl
+    % make BOARD=x86atom CONFIG=__NITX_315
+\ce
+    The instantiated BSP will be present in the default location:
+\cs
+    $WIND_BASE/target/config/itl_x86atom__NITX_315
+\ce
+
+`UART Connections':
+There are four UART ports integrated in the Topcliff, one is a full 9-pin RS232
+connecting to a COM header P7. The others are 3-pin RS232 connection to CH7317A-BF.
+There is no serial port in the panel, but parallel lines on the board are available.
+See 6806800L71A_NITX_300_315_IU_Preliminary.pdf
+Full Wire RS232 Header
+ Pin     Signal
+  1      COM1A_DCD   
+  2      COM1A_RXD
+  3      COM1A_TXD
+  4      COM1A_DTR
+  5      GND
+  6      COM1A_DSR
+  7      COM1A_RTS
+  8      COM1A_CTS
+  9      COM1A_RI-
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 8.0 SPECIAL CONSIDERATIONS
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section discuss special features and/or restrictions of boards supported
+by instantiations of this BSP.
+
+\"--------------------------------------------------------------------------------
+\sh 8.1 Make Targets
+\"--------------------------------------------------------------------------------
+To make a target, the development environment must be setup first using the wrenv.sh
+utility, and a BSP needs to be instantiated.
+
+All the targets for the make command in this section refer to an instantiated BSP.
+Reference section <`BSP INSTANTIATION'> for instructions to instantiate a BSP.
+
+The make targets are listed as the names of object-format files. Other images not
+listed here may not be tested.
+
+\ts
+`Supported "make targets"'
+-----------------------------
+ Target specified during make 
+-----------------------------  
+ bootrom
+ bootrom_uncmp
+ bootrom.bin
+ vxWorks (with `vxWorks.sym')
+-----------------------------  
+\te
+
+`Make target examples:'
+
+To erase all make targets (non-project builds):
+\cs
+    % cd $WIND_BASE/target/config/itl_<BOARD>   
+    % make clean
+\ce
+
+bootrom_uncmp:
+\cs
+    % cd $WIND_BASE/target/config/itl_<BOARD>   
+    % make bootrom_uncmp
+\ce
+
+bootrom_uncmp.bin:
+\cs
+    % cd $WIND_BASE/target/config/itl_<BOARD>
+    % make bootrom_uncmp.bin
+\ce
+
+\"--------------------------------------------------------------------------------
+\sh 8.2 BSP Bootloaders and Bootroms
+\"--------------------------------------------------------------------------------
+\ts
+----------------------+--------------------------------------------+
+Bootloader/Bootrom    | Status                      | GRUB support |
+----------------------+--------------------------------------------+
+BIOS (pre-flashed)    | SUPPORTED                   |              |
+bootrom               | SUPPORTED                   |  Support     |
+bootrom_uncmp         | SUPPORTED                   |  Support     |
+vxWorks               | SUPPORTED                   |  Support     |
+vxWorks_rom           | UNSUPPORTED                 |              |
+vxWorks_romCompress   | UNSUPPORTED                 |              |
+vxWorks_romResident   | UNSUPPORTED                 |              |
+----------------------+-----------------------------+--------------+
+\te
+
+\"--------------------------------------------------------------------------------
+\sh 8.3 Warm Boot Devices
+\"--------------------------------------------------------------------------------
+To select the warm start device in a vxprj based image, add the corresponding
+component to the instantiated BSP project and the SYS_WARM_TYPE
+parameter will automatically be set using the requested type.
+
+`NOTE': Note that the following components are `not' supported by this BSP
+instantiations
+\cs
+INCLUDE_SYS_WARM_FD
+INCLUDE_SYS_WARM_TFFS
+\ce
+
+`Supported components for warm boot device selection:'
+\cs
+INCLUDE_SYS_WARM_BIOS
+INCLUDE_SYS_WARM_USB
+INCLUDE_SYS_WARM_ICH
+INCLUDE_SYS_WARM_AHCI
+\ce
+
+`Example: To add warm start from BIOS'
+\cs
+    vxprj component add INCLUDE_SYS_WARM_BIOS
+\ce
+
+The BOOTROM_DIR parameter sets the default device directory path string
+containing the bootrom file.
+
+\cs
+#define BOOTROM_DIR  "/bd0" /@ USB bootrom directory @/
+\ce
+
+For vxprj based images, the default value is selected based on the included
+warm start device component.
+
+\cs
+(INCLUDE_SYS_WARM_FD)  ::("/fd0")
+(INCLUDE_SYS_WARM_USB) ::("/bd0")
+(INCLUDE_SYS_WARM_ICH) ::("/ata0:1")
+(INCLUDE_SYS_WARM_AHCI)::("/ata0:1")
+\ce
+
+The default bootrom directory can be adjusted by setting the
+BOOTROM_DIR parameter.
+
+vxprj parameter set BOOTROM_DIR '"/bd0"'
+\bs
+NOTE: The default warm start configuration uses USB device 0.
+\be
+
+\"--------------------------------------------------------------------------------
+\sh 8.4 Special Routines
+\"--------------------------------------------------------------------------------
+The following routines are specific to this BSP instantiations and are
+available to the user. They are written in assembly code in sysALib.s.
+For further details, please refer to following entries:
+
+\ts
+sysInByte()         | input one byte from I/O space
+sysInWord()         | input one word from I/O space
+sysInLong()         | input one long-word from I/O space
+sysOutByte()        | output one byte to I/O space
+sysOutWord()        | output one word to I/O space
+sysOutLong()        | output one long-word to I/O space
+sysInWordString()   | input word string from I/O space
+sysInLongString()   | input long string from I/O space
+sysOutWordString()  | output word string to I/O space
+sysOutLongString()  | output long string to I/O space
+\te
+
+\"--------------------------------------------------------------------------------
+\sh 8.5 Hyper-threading configuration
+\"--------------------------------------------------------------------------------
+SMT support may not available for all CRB's supported by this BSP. Support for
+Hyper-threading and SMT is indicated by the availability of a SMT bundle for
+the VxWorks kernel. Adding the correct bundle will setup the scheduling policy
+to handle Hyper-threading enabled CRBs as required.
+
+For detailed information about SMT (Simultaneous multithreading), please refer to the
+\tb VxWorks Programmer's Guide: Architecture Supplement
+
+Make sure Hyper-threading is enabled in your target's BIOS. The procedure required
+may be different on different targets. Please reference your board manufacturer
+documentation.
+
+When configuring your VxWorks kernel via the vxprj project facility, add the
+following component to your VxWorks kernel project:
+
+\cs
+    vxprj component add INCLUDE_SMP_SCHED_SMT_POLICY
+\ce
+
+Reference the `NOTES' in section `<Creating a VxWorks VIP kernel image>' for
+instructions how to add and compile SMT in your vxprj or Workbench projects.
+
+
+\"--------------------------------------------------------------------------------
+\sh 8.6 The itl_x86 build models:
+\"--------------------------------------------------------------------------------
+\ts
+-------------------------+--------------------------------------------------------------------
+Model                    | Usage
+-------------------------+--------------------------------------------------------------------
+'UP'                     | image built to run on only CPU 0 with no multi-image support
+'SMP'                    | image built to run on a CPU set starting at CPU 0 with no
+                         |   multi-image support
+'bootrom'                | rom based UP bootloader for loading CPU 0 images
+-------------------------+--------------------------------------------------------------------
+\te
+
+\"--------------------------------------------------------------------------------
+\sh UP
+\"--------------------------------------------------------------------------------
+UP is a uniprocessor kernel configured to be run on physical CPU 0.
+
+\"--------------------------------------------------------------------------------
+\sh SMP
+\"--------------------------------------------------------------------------------
+Under SMP, it is possible to enable from 1 to 8 hardware CPUs. The enabled CPUs
+will be allocated contiguously starting at the base CPU.
+
+The number of CPUs assigned to an image is controlled by the project parameter
+VX_SMP_NUM_CPUS.  When a project is created, the VX_SMP_NUM_CPUS parameter will
+default to the maximum number of CPUs supported by the processor.
+
+Using the "vxprj" utility, you could modify VX_SMP_NUM_CPUS as follows
+using the command line or you can use the Kernel Configuration editor in
+Workbench.
+
+\bs
+$ cd <projectDir>
+$ vxprj parameter set VX_SMP_NUM_CPUS 2
+$ vxprj build
+\be
+
+\"--------------------------------------------------------------------------------
+\sh 8.7 Changing AP startup time in SMP based configuration
+\"--------------------------------------------------------------------------------
+
+This BSP supports configuring the time allowed to determine if an application
+processor succeeded in starting up. Two variables are used to control the number of
+times to test, and how long to wait between tests.
+
+Variables SYS_AP_LOOP_COUNT and SYS_AP_TIMEOUT can be changed in your vxprj project
+\cs
+    vxprj parameter set SYS_AP_LOOP_COUNT 200000
+    vxprj parameter set SYS_AP_TIMEOUT 10
+\ce
+
+It is also visible under your Workbench project BSP build parameters.
+\cs
+        -> Right click on your project
+          -> Edit Kernel Configuration
+            -> Click on Components tab
+              -> Expand "Hardware"
+                -> Expand "itl_atom BSP configuration options"
+                  -> Expand "BSP build parameters"
+                     -> Change value for SYS_AP_LOOP_COUNT as desired.
+                     -> Change value for SYS_AP_TIMEOUT as desired.
+
+    Now rebuild you project.
+\ce
+
+SYS_AP_TIMEOUT time is specified in microseconds and should be short in duration.
+SYS_AP_LOOP_COUNT times SYS_AP_TIMEOUT gives the total time to wait for an AP before
+giving up and moving on to the next application processor.
+
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 9.0 KNOWN PROBLEMS
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+
+This section discuss problems that have been observed on some platforms and
+workarounds if available.
+
+\"--------------------------------------------------------------------------------
+\sh 9.1 BIOS constraints and the number of cores available
+\"--------------------------------------------------------------------------------
+BIOS constraints sometimes limit the number of cores available when
+configured to boot using the MP Table constructed by the BIOS (i.e. using
+the "INCLUDE_MPTABLE_BOOT_OP"). This issue has been seen to occur when
+using the hanlanCreek boards.
+
+Unlike some arches we are dependent on an external 3rd party for the initial
+configuration/description of the existing hardware env, by default we use the
+BIOS Setup Utility, it being the most universal. This utility gathers this
+information and provides it in the form of the MP Table.
+
+Until an update to the BIOS is provided by the hardware vendor, if this issue
+occurs, it is recommended to bypass the BIOS MP Table construction and create
+the MP Table with the information gathered under ACPI. This is done by
+configuring the BSP to use the "INCLUDE_ACPI_BOOT_OP" option.
+
+WindRiver does not provide BIOS updates.
+\ss
+NOTE: INCLUDE_ACPI_BOOT_OP is included as the default configuration to use
+      for MP Data retrieval.
+\se
+
+\"--------------------------------------------------------------------------------
+\sh 9.2 Using legacy interrupts for gei Ethernet device
+\"--------------------------------------------------------------------------------
+Disabling gei MSI interrupts and using legacy interrupts in hwconf.c:
+
+\cs
+    LOCAL const struct intrCtlrInputs loApicInputs[] = {
+        { VXB_INTR_DYNAMIC, "yn", 0, 0 },
+    /@ Uncomment the following lines if using Message Signaled
+       Interrupts (MSI) @/
+    /@ for GEI Ethernet driver instead of legacy interrupts
+                        @/
+    #if 0
+        { VXB_INTR_DYNAMIC, "gei", 0, 0 },
+        { VXB_INTR_DYNAMIC, "gei", 1, 0 },
+        ...
+
+        { VXB_INTR_DYNAMIC, "gei", 9, 0 },
+    #endif
+    };
+\ce
+
+\"--------------------------------------------------------------------------------
+\sh 9.3 Using MSI interrupts for gei Ethernet device (default)
+\"--------------------------------------------------------------------------------
+Enabling gei MSI interrupts in hwconf.c (This is the default):
+
+\cs
+    LOCAL const struct intrCtlrInputs loApicInputs[] = {
+        { VXB_INTR_DYNAMIC, "yn", 0, 0 },
+    /@ Uncomment the following lines if using Message Signaled
+       Interrupts (MSI) @/
+    /@ for GEI Ethernet driver instead of legacy interrupts
+                        @/
+    #if 1
+        { VXB_INTR_DYNAMIC, "gei", 0, 0 },
+        { VXB_INTR_DYNAMIC, "gei", 1, 0 },
+        ...
+        
+        { VXB_INTR_DYNAMIC, "gei", 9, 0 },
+    #endif
+    };
+\ce
+
+\"--------------------------------------------------------------------------------
+\sh 9.4 The PCI Express slots are PCI Express Gen2
+\"--------------------------------------------------------------------------------
+If the PCI Express slots in the hardware used are PCI Express Gen2, then there
+may be some compatibility issues with pre Gen2 PCI Express cards, depending
+on the board used.
+
+\"--------------------------------------------------------------------------------
+\sh 9.5 Hardware with Virtual Wire Mode
+\"--------------------------------------------------------------------------------
+Some hardware has not been tested with Virtual Wire Mode enabled. The use of
+symmetric IO mode for interrupts are strongly advised.
+
+\"--------------------------------------------------------------------------------
+\sh 9.6 USB Legacy mode can cause problems with VxWorks
+\"--------------------------------------------------------------------------------
+USB Legacy mode can cause problems with VxWorks.  Boot process may
+hang under certain conditions.  One workaround is to disable USB
+Legacy support in BIOS.  However, this will disable the use of USB
+devices as a boot device.  When Legacy Support is enabled, things work
+better if VxWorks USB stack, EHCI driver, and UHCI drivers are
+initialized.
+
+`nvRam test': The first test in this suite may fail on the first attempt
+with a new boot disk.  (NV-RAM is implemented as a file, created on the
+boot disk on the first write command to NV-RAM.)  Subsequent times
+through the test suite should succeed.
+
+OTHER
+The valid auxiliary clock rates are between 2 ticks per
+second and 2 to the power of 13 ticks per second (2^13 = 8192).
+
+If SCSI configuration fails, it may be the result of improper SCSI bus
+termination. Check termination carefully on all devices, including
+the controller. Note that some devices have built in termination that is
+configured via a jumper.
+
+In order to dynamically update the MMU table entries, prior to MMU
+initialization, several dummy entries have been added to the end of the
+memory description table sysPhysMemDesc. This allows PCI device
+configuration space, configured by the BIOS, to be properly mapped into
+the VxWorks memory map. This is done by sysMmuMapAdd() in sysLib.c.
+
+This BSP does not support ISA PnP. Such devices can be supported if
+PnP is disabled and the device parameters (IO address, Memory address,
+IRQ, DMA channel etc) is set to match its BSP driver configuration. If
+the device uses soft-configuration instead of jumpers, an appropriate
+utility program, usually available from the device manufacturer,
+should be used to setup the device parameters.
+
+DMA Buffer Alignment and cacheLib
+
+If you write device drivers that use Intel 8237 direct memory access
+into buffers obtained from cacheLib, the buffers must be aligned on
+a 64KB boundary and be in lower memory.
+
+Following features are enabled in sysHwInit() depending upon the feature flags
+obtained by the CPUID instruction.  See pentiumLib for more details of these
+features.
+
+\is
+\i `Memory Type Range Registers' (MTRRs)
+
+If INCLUDE_MTRR_GET is defined, contents of the MTRRS are copied to the
+sysMtrr[] table.  Otherwise it sets the contents of sysMtrr[] to the MTRRs.
+
+\i `Performance Monitoring Counter' (PMC)
+
+This is an optional feature, which is configured via the INCLUDE_PMC macro and
+turned on by default in instantiated BSPs.
+
+\i `Machine Check Architecture' (MCA)
+
+This is enabled in pentiumMcaEnable() in sysHwInit() if the MCA is supported
+by the processor.
+
+\i `Enhanced MMU'
+
+The enhanced MMU is required and is included by default by defining
+INCLUDE_MMU_P6_32BIT in the instantiated BSPs. 4KB pages are supported.
+
+\i `Data Cache Mode'
+
+CACHE_COPYBACK data cache mode with CACHE_SNOOP_ENABLE is configured as
+the default in instantiated BSPs.
+It uses Write Back data cache mode with the generic MMU library for X86
+architecture. CACHE_SNOOP_ENABLE respects MESI cache protocol and does not
+invoke the WBINVD (write back and invalidate cache) instruction in the
+flush routine in the cache library.
+
+\ie
+
+\"--------------------------------------------------------------------------------
+\sh 9.7 MTRR
+\"--------------------------------------------------------------------------------
+This table shows effective memory type depending on MTRR, PCD, and
+PWT setting.
+
+\ts
+MTRR mem type | PCD value | PWT value | Effective mem type
+------------------------------
+UC | X | X | UC
+WC | 0 | 0 | WC
+   | 0 | 1 | WC
+   | 1 | 0 | WC
+   | 1 | 1 | UC
+WT | 0 | X | WT
+   | 1 | X | UC
+WP | 0 | 0 | WP
+   | 0 | 1 | WP
+   | 1 | 0 | UC
+   | 1 | 1 | UC
+WB | 0 | 0 | WB
+   | 0 | 1 | WT
+   | 1 | X | UC
+------------------------------
+\te
+
+This table shows MTRR memory types and their properties.
+
+\ts
+         | Cacheable in   |           | Allows      | Memory
+         | L1 and L2      | Writeback | Speculative | Ordering
+Mnemonic | Caches         | Cacheable | Reads       | Model
+---------------------------------------------------------------
+UC       | No             | No        | No          | Strong Ordering
+WC       | No             | No        | Yes         | Weak Ordering
+WT       | Yes            | No        | Yes         | Speculative
+         |                |           |             | Processor Ordering
+WP       | Yes for reads, | No        | Yes         | Speculative
+         | No for writes  |           |             | Processor Ordering
+WB       | Yes            | Yes       | Yes         | Speculative
+         |                |           |             | Processor Ordering
+---------------------------------------------------------------
+\te
+
+\"--------------------------------------------------------------------------------
+\sh 9.8 BIOS E820 Memory Auto-size
+\"--------------------------------------------------------------------------------
+When GRUB is used to load VxWorks, the multiboot header information is used
+to determine memory size.
+Using the 0x15 interrupt with function code 0xe820, the physical RAM
+memory map can be retrieved from the BIOS.  The data returned is a set of
+descriptors containing the memory range start address, length, and type.
+The data is acquired while in 16 bit REAL mode during cold boot in the
+bootrom, and stored in a fixed location in reserved memory.  This data
+is in turn consumed by the VxWorks image during startup to dynamically
+adjust the top of memory.  Additional memory segments beyond the
+one located at LOCAL_MEM_LOCAL_ADRS are automatically mapped to the MMU.
+
+By default, BIOS E820 memory auto sizing and grub header information are enabled.
+To disable, add the INCLUDE_NO_MEM_AUTOSIZE component to your project.
+\cs
+    vxprj component add INCLUDE_NO_MEM_AUTOSIZE
+\ce
+
+When memory auto sizing is disabled, the LOCAL_MEM_SIZE parameter
+must be set to reflect the top of usable memory.  This value is typically
+the system ram size minus the on-board memory base (0x00100000).
+
+For a system with .75 GB of installed system ram (0x30000000) the LOCAL_MEM_SIZE
+parameter would be 0x2ff00000 (0x30000000-0x00100000).
+
+On 32-bit platforms, the system ram size typically cannot exceed 3.4GB.
+Keep in mind that certain legacy memory ranges (graphics, SMM) are restricted
+and the range has to be subtracted from the range of usable memory.
+\cs
+    vxprj parameter set LOCAL_MEM_SIZE 0x2ff00000
+\ce
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 10.0 BOARD LAYOUT
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+ 
+The Unified BSP (amd_ekabini_dbft3) supports multiple boards.
+Please consult your board vendor documentation for the board layout.
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 11.0 SEE ALSO
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\tb VxWorks User's Guide: Getting Started
+
+\tb VxWorks Programmer's Guide: Configuration
+
+\tb VxWorks Programmer's Guide: Architecture Supplement
+
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\h 12.0 BIBLIOGRAPHY
+\"--------------------------------------------------------------------------------
+\"--------------------------------------------------------------------------------
+\tb Intel Architecture Software Developer's Manual, Volume 1: Basic Architecture
+
+\tb Intel Architecture Software Developer's Manual, Volume 2: Instruction Set Reference
+
+\tb Intel Architecture Software Developer's Manual, Volume 3: System Programming Guide
+
+\tb AP-485, Intel Processor Identification and the CPUID Instruction
+
+\tb PCI System Architecture, Fourth Edition, Addison-Wesley, 1999, ISBN 0-201-30974-2
+

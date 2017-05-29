@@ -1,0 +1,20 @@
+
+          README: AMD eKabini DB-FT3 BSP
+
+This file contains board-specific information for the AMD eKabini DB-FT3 BSP.
+
+This file documents BSP interface changes from previous software or hardware
+versions, and notifies the user of serious caveats that must be noted before
+using this BSP.
+
+Additionally, the target board's reference entry (e.g. man amd_eKabini_dbft3 for
+UNIX or the HTML reference entries) provides board-specific information 
+necessary to run VxWorks.  The target reference entry should be read fully 
+before this BSP is used.
+
+--------------------------------------------------------------------------------
+RELEASE 2.1/0
+
+    Released from Wind River for General Purpose Platform 6.9, VxWorks 6.9.3.1
+
+    Initial release
