@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>VIP_eKabini_RTL816X_6948_UP</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>com.windriver.ide.osconfig.core.wrbuilder</name>
+			<triggers>clean,full,incremental,</triggers>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>com.windriver.ide.osconfig.core.wrnature</nature>
+		<nature>com.windriver.ide.core.wrcorenature</nature>
+		<nature>org.eclipse.cdt.core.cnature</nature>
+		<nature>org.eclipse.cdt.core.ccnature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>eKabini_RTL816X_6948</name>
+			<type>2</type>
+			<locationURI>WIND_HOME/vxworks-6.9/target/config/eKabini_RTL816X_6948</locationURI>
+		</link>
+		<link>
+			<name>romStart.c</name>
+			<type>1</type>
+			<locationURI>WIND_HOME/vxworks-6.9/target/config/comps/src/romStart.c</locationURI>
+		</link>
+	</linkedResources>
+</projectDescription>

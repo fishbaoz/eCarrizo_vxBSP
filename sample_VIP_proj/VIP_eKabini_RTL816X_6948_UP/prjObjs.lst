@@ -1,0 +1,11 @@
+sysALib.o
+rtl8169VxbEndA.o
+sysLib.o
+vxbPiixStorageA.o
+vxbIoApicIntrA.o
+vxCpuIdALib.o
+usrAppInit.o
+usrRtpAppInit.o
+prjConfig.o
+linkSyms.o
+hello.o
