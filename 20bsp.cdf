@@ -298,7 +298,7 @@ Parameter DEFAULT_BOOT_LINE {
     NAME            default boot line
     SYNOPSIS        Default boot line string
     TYPE            string
-    DEFAULT         ("gei(0,0)host:vxWorks h=90.0.0.3 e=90.0.0.50 u=target")
+    DEFAULT         ("gei(0,0)host:vxWorks h=90.0.0.3 e=90.0.0.50 u=target1 s=/ata0:1/start.txt")
 }
 
 /*

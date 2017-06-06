@@ -47,7 +47,7 @@ RAM_HIGH_ADRS       = 10008000               # Boot image entry point
 
 EXTRA_DEFINE       += -fno-zero-initialized-in-bss
 
-MACH_EXTRA          = vxCpuIdALib.o rtl8169VxbEndA.o vxbPiixStorageA.o
+MACH_EXTRA          = vxCpuIdALib.o vxbIoApicIntrA.o rtl8169VxbEndA.o 
 
 #
 # Usually RELEASE has the following targets to build 

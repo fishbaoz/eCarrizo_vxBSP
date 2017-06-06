@@ -911,11 +911,51 @@ void sysHwInit0 (void)
 * RETURNS: N/A
 */
 
+void enable_serial()
+{
+	sysOutByte(0x4E, 0x55);
+
+	sysOutByte(0x4E, 0x0);
+	sysOutByte(0x4F, 0x28);
+
+	sysOutByte(0x4E, 0x1);
+	sysOutByte(0x4F, 0x98| 1 << 2);
+
+	sysOutByte(0x4E, 0x2);
+	sysOutByte(0x4F, 0x08 | 1 << 7);
+	
+	sysOutByte(0x4E, 0x7);
+	sysOutByte(0x4F, 0x0);
+	
+	sysOutByte(0x4E, 0xA);
+	sysOutByte(0x4F, 0x0 | 1 << 6);
+
+	sysOutByte(0x4E, 0x33);
+	sysOutByte(0x4F, 0x0);
+
+	sysOutByte(0x4E, 0xC);
+	sysOutByte(0x4F, 0x2);
+
+	sysOutByte(0x4E, 0x34);
+	sysOutByte(0x4F, 0x0);
+
+	sysOutByte(0x4E, 0x25);
+	sysOutByte(0x4F, 0xFE);
+
+	sysOutByte(0x4E, 0x28);
+	sysOutByte(0x4F, 0x4);
+
+	sysOutByte(0x4e, 0xAA);
+}
+
 void sysHwInit (void)
     {
     PHYS_MEM_DESC *pMmu;
     int ix = 0;
+    /* enable_serial();*/
 
+    /*sysSerialHwInit ();  */    /* initialize serial data structure */
+    /* earlyPrint("bao\n"); */
 #ifdef  INCLUDE_USER_SYSLIB_HWINIT_PRE
 #include "userSyslibHwinitPre.c"                /* user extension hook */
 #endif
@@ -2647,6 +2687,27 @@ UINT64 sysCpuIdCalcFreq (void)
     return (freq);
     }
 
+void print_one_hex(UINT32 val)
+{
+	char out_hex[2];
+	out_hex [1] = 0;
+	val &= 0xF;
+	if (val < 0xA) out_hex[0]= val + '0';
+	else out_hex[0] = val - 0xA + 'A';
+	earlyPrintVga(out_hex);
+}
+void print_hex(UINT32 val)
+{
+	print_one_hex(val >> 28);
+	print_one_hex(val >> 24);
+	print_one_hex(val >> 20);
+	print_one_hex(val >> 16);
+	print_one_hex(val >> 12);
+	print_one_hex(val >> 8);
+	print_one_hex(val >> 4);
+	print_one_hex(val);
+	 earlyPrintVga(" ");
+}
 UINT64 sysCalcAMDFreq(void)
 {
  UINT64 coreCof, cpuFid, cpuDid;
@@ -2658,13 +2719,13 @@ UINT64 sysCalcAMDFreq(void)
 	  * CoreCOF = 100 * (MSRC001_00[6B:64][CpuFid] + 10h) / (2^MSRC001_00[6B:64][CpuDid]).
 	  * 
 	  */
+	UINT32 twopow[]={1,2,4,8,16};
 	 
 	 pentiumMsrGet(0xC0010064, &coreCof);
 	 
 	 cpuFid= coreCof & 0x2F;
 	 cpuDid= ( coreCof & 0x01C0 ) >> 6;
-	 
-	 coreCof = 100 * ((cpuFid + 0x10) / (2 << (cpuDid - 1)));
+	 coreCof = 100 * ((cpuFid + 0x10) / twopow[cpuDid]);
 	 
 	 return(coreCof * 1000000);
 }

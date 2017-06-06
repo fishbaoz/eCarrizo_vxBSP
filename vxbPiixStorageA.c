@@ -488,8 +488,10 @@ LOCAL BOOL vxbPiixDevProbe
         switch (devId)
             {
             case 0x209A:
-            case 0x7800:
+            case 0x7800 ... 0x7810:
+            case 0x7900 ... 0x7910:
                 return (TRUE);
+		break;
             default:
                 break;
             }
