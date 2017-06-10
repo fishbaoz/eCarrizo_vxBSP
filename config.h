@@ -64,7 +64,7 @@ extern "C" {
 
 #if BSP_CMDLINE_BUILD
 #define DEFAULT_BOOT_LINE \
-    "fs=0,0(0,0)host:/ata0:1/vxWorks o=gei0 h=172.18.101.168 e=172.18.101.170:0xffffff00 u=target f=0x2 pw=target"
+    "gei(0,0) host:/VxWorks/eKabini_RTL816X_6948/vxWorks h=172.18.101.168 e=172.18.101.170:ffffff00 u=target pw=target tn=target"
     /* "fs=0,0(0,0)host:/ata0:1/vxWorks o=gei0 h=172.18.101.168 e=172.18.101.170:0xffffff00 u=target f=0x2 pw=target" */
     /* "gei(0,0) host:/VxWorks/eKabini_RTL816X_6948/vxWorks h=172.18.101.168 e=172.18.101.170:ffffff00 u=target pw=target tn=target" */
 
@@ -372,7 +372,7 @@ IMPORT STATUS (*_func_kwrite) (char * buf, size_t len);
  */
 
 #define INCLUDE_USB
-#undef INCLUDE_USB
+/* #undef INCLUDE_USB */
 
 #ifdef  INCLUDE_USB
 #define INCLUDE_USB_INIT
@@ -596,7 +596,7 @@ IMPORT STATUS (*_func_kwrite) (char * buf, size_t len);
 #define USER_RESERVED_MEM       (0)            /* user reserved memory */
 
 #undef  SYSTEM_RAM_SIZE         /* 256MB RAM is default if not autosizing */
-#define SYSTEM_RAM_SIZE         (0x0F000000)    /* 256-(16MB stolen) = 240MB */
+#define SYSTEM_RAM_SIZE         (0x80000000)    /* 256-(16MB stolen) = 240MB */
 
 /* LOCAL_MEM_SIZE is the size of RAM available to the OS */
 
