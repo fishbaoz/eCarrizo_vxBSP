@@ -2,7 +2,7 @@
 
 
 /*
-GENERATED: Tue Jun 06 21:39:52 +0900 2017
+GENERATED: Fri Jun 09 16:04:23 +0900 2017
 DO NOT EDIT - file is regenerated whenever the project changes
 */
 
@@ -75,6 +75,7 @@ extern int getservbyname ();
 extern int getservbyport ();
 extern int getw ();
 extern int gmtime ();
+extern int histSave ();
 extern int hookAddToTail ();
 extern int hookShow ();
 extern int ifAddrAdd ();
@@ -201,6 +202,8 @@ extern int tolower ();
 extern int toupper ();
 extern int ungetc ();
 extern int unldByModuleId ();
+extern int usbEhcdInit ();
+extern int usbXhcdInit ();
 extern int vfprintf ();
 extern int vxAtomicAdd ();
 extern int vxBusShow ();
@@ -280,6 +283,7 @@ FUNC linkSyms [] = {
     getservbyport,
     getw,
     gmtime,
+    histSave,
     hookAddToTail,
     hookShow,
     ifAddrAdd,
@@ -406,6 +410,8 @@ FUNC linkSyms [] = {
     toupper,
     ungetc,
     unldByModuleId,
+    usbEhcdInit,
+    usbXhcdInit,
     vfprintf,
     vxAtomicAdd,
     vxBusShow,

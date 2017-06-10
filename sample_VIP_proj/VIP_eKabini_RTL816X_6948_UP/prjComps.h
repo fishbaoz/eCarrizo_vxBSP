@@ -2,7 +2,7 @@
 
 
 /*
-GENERATED: Tue Jun 06 21:39:52 +0900 2017
+GENERATED: Fri Jun 09 16:04:23 +0900 2017
 DO NOT EDIT - file is regenerated whenever the project changes
 */
 
@@ -114,6 +114,8 @@ DO NOT EDIT - file is regenerated whenever the project changes
 #define INCLUDE_EDR_SHOW
 #define INCLUDE_EDR_STUB
 #define INCLUDE_EDR_SYSDBG_FLAG
+#define INCLUDE_EHCI
+#define INCLUDE_EHCI_INIT
 #define INCLUDE_END
 #define INCLUDE_END_COMMON
 #define INCLUDE_END_ETHER_HDR
@@ -146,6 +148,8 @@ DO NOT EDIT - file is regenerated whenever the project changes
 #define INCLUDE_GTF_TIMER_START
 #define INCLUDE_HANDLE_SHOW
 #define INCLUDE_HASH
+#define INCLUDE_HCD_BUS
+#define INCLUDE_HISTORY_FILE_SHELL_CMD
 #define INCLUDE_HOOKS
 #define INCLUDE_HOOK_SHOW
 #define INCLUDE_HOST_TBL
@@ -382,6 +386,7 @@ DO NOT EDIT - file is regenerated whenever the project changes
 #define INCLUDE_SHELL_BANNER
 #define INCLUDE_SHELL_CORE
 #define INCLUDE_SHELL_EMACS_MODE
+#define INCLUDE_SHELL_HISTORY_FILE
 #define INCLUDE_SHELL_INTERP_C
 #define INCLUDE_SHELL_INTERP_CMD
 #define INCLUDE_SHELL_VI_MODE
@@ -452,6 +457,18 @@ DO NOT EDIT - file is regenerated whenever the project changes
 #define INCLUDE_UN_COMP
 #define INCLUDE_UN_COMP_SHOW
 #define INCLUDE_UN_SHOW
+#define INCLUDE_USB
+#define INCLUDE_USB_ASYN_MSG
+#define INCLUDE_USB_GEN2_HELPER
+#define INCLUDE_USB_GEN2_KEYBOARD
+#define INCLUDE_USB_GEN2_KEYBOARD_INIT
+#define INCLUDE_USB_GEN2_KEYBOARD_SHELL_ATTACH
+#define INCLUDE_USB_GEN2_MOUSE
+#define INCLUDE_USB_GEN2_MOUSE_INIT
+#define INCLUDE_USB_HOST_CLASS_INIT
+#define INCLUDE_USB_INIT
+#define INCLUDE_USB_XHCI_HCD
+#define INCLUDE_USB_XHCI_HCD_INIT
 #define INCLUDE_USER_APPL
 #define INCLUDE_USE_NATIVE_SHELL
 #define INCLUDE_USR_MPAPIC

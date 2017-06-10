@@ -2,7 +2,7 @@
 
 
 /*
-GENERATED: Tue Jun 06 21:39:52 +0900 2017
+GENERATED: Fri Jun 09 16:04:23 +0900 2017
 DO NOT EDIT - file is regenerated whenever the project changes.
 This file contains the non-BSP system initialization code
 for Create a bootable VxWorks image (custom configured).
@@ -121,6 +121,7 @@ for Create a bootable VxWorks image (custom configured).
 #include <private/sdLibP.h>
 #include <private/semPxLibP.h>
 #include <private/shellCmdP.h>
+#include <private/shellHistLibP.h>
 #include <private/shellLibP.h>
 #include <private/sigLibP.h>
 #include <private/svDataCollectorLibP.h>
@@ -237,6 +238,7 @@ IMPORT STATUS edrShellCmdInit ();
 IMPORT void endEtherHdrInit (void);
 IMPORT STATUS eventPointLibInit (void);
 IMPORT STATUS eventPointStubLibInit (void);
+IMPORT void vxbUsbHciRegister (void);
 extern STATUS logInit (int, int, BOOL);
 IMPORT void mmanLibInit (void);
 extern STATUS moduleShellCmdInit (void);
@@ -272,6 +274,8 @@ extern STATUS unloadShellCmdInit (void);
 IMPORT void usrUnCompInit (void);
 IMPORT void uncompShowInit (void);
 IMPORT void unShowInit (void);
+IMPORT void usbHstClassInit (void);
+IMPORT STATUS usbInit (void);
 IMPORT STATUS vmShowShellCmdInit (void);
 IMPORT void usrVxbDiskDrv (void);
 IMPORT STATUS vxbSysClkLibInit (void);
@@ -283,6 +287,7 @@ IMPORT void usrWdbInit (void); void usrWdbInitDone (void);
 
 /* BSP_STUBS */
 
+#include <usbPciStub.c>
 
 
 /* configlettes */
@@ -362,6 +367,8 @@ IMPORT void usrWdbInit (void); void usrWdbInitDone (void);
 #include <usrSysSymTbl.c>
 #include <usrSysctl.c>
 #include <usrTip.c>
+#include <usrUsbDebug.c>
+#include <usrUsbInit.c>
 #include <usrVrfs.c>
 #include <usrVxbDisk.c>
 #include <usrVxbSioChanUtil.c>
@@ -512,6 +519,7 @@ void usrShellCmdInit (void)
     rtpShellCmdInit ();                 /* List of commands for the shell command interpreter related to processes. */
     rtpShowShellCmdInit ();             /* List of process show commands for the shell command interpreter. */
     shlShellCmdInit ();                 /* List of SHL commands for the shell command interpreter */
+    histShellCmdInit ();                /* Saving and loading commands for the shell command interpreter history. */
     tipShellCmdInit ();                 /* tip shell command line support */
     }
 
@@ -525,6 +533,7 @@ void usrShellCmdInit (void)
 void usrShellInit (void)
     {
     shellLibInit ();                    /* Handles the shell core files */
+    shellHistLibInit ();                /* Allows to save and load the shell history */
     dbgInit ();                         /* Breakpoints and stack tracer on target. Not needed for remote debugging with Workbench. */
     vxdbgRtpLibInit ();                 /* Initialize process debugging library. */
     usrBanner ();                       /* Display the WRS banner on startup */
@@ -878,6 +887,8 @@ void usrRoot (char *pMemPoolStart, unsigned memPoolSize)
     usrCplusLibInit ();                 /* Basic support for C++ applications */
     cplusDemanglerInit ();              /* Support library for kernel shell and loader: provides human readable forms of C++ identifiers */
     usrScInit ();                       /* The system call initialization sequence */
+    usbMsgAsynLibInit();                /* USB Message Asynchronous Library Initialization */
+    usbHstClassInit();                  /* USB Host Class Driver Initialization */
     usrToolsInit ();                    /* software development tools */
     usrAppInit ();                      /* call usrAppInit() (in your usrAppInit.c project file) after startup. */
     usrRtpAppInit ();                   /* Launch RTP from a user-defined function. */
@@ -963,6 +974,7 @@ void hardWareInterFaceBusInit (void)
     i8042vxbRegister();                 /* driver for commonly found keyboard controllers */
     rtgRegister();                      /* RealTek 8139C+/8168/8169/8110/8101E VxBus END driver */
     ns16550SioRegister();               /* ns16550 SIO support */
+    vxbUsbHciRegister();                /* Register USB Host Controller to vxBus */
     vxbAhciStorageRegister();           /* Supports Ahci controllers */
     vxbIntDynaCtlrInit();               /* VxBus Dynamic Interrupt Controller Library */
     vxbIaTimestampDrvRegister();        /* Intel timestamp Driver */
@@ -1003,6 +1015,7 @@ void hardWareInterFaceInit (void)
 
 STATUS vxbDevInit (void)
     {
+    usbInit ();                         /* USB Common Stack Initialization */
     return(vxbDevInitInternal ());      /* vxbus device initialization */
     }
 
